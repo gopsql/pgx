@@ -126,6 +126,14 @@ func (r Result) RowsAffected() (int64, error) {
 	return r.rowsAffected, nil
 }
 
+func (r *Rows) Columns() ([]string, error) {
+	columns := []string{}
+	for _, fd := range r.Rows.FieldDescriptions() {
+		columns = append(columns, string(fd.Name))
+	}
+	return columns, nil
+}
+
 func (r *Rows) Close() error {
 	r.Rows.Close()
 	return nil
