@@ -26,6 +26,13 @@ type (
 	}
 )
 
+var (
+	_ db.DB     = (*DB)(nil)
+	_ db.Tx     = (*Tx)(nil)
+	_ db.Result = (*Result)(nil)
+	_ db.Rows   = (*Rows)(nil)
+)
+
 // MustOpen is like Open but panics if connect operation fails.
 func MustOpen(conn string) db.DB {
 	c, err := Open(conn)
@@ -50,7 +57,11 @@ func (d *DB) Close() error {
 }
 
 func (d *DB) Exec(query string, args ...interface{}) (db.Result, error) {
-	re, err := d.Pool.Exec(context.Background(), query, args...)
+	return d.ExecContext(context.Background(), query, args...)
+}
+
+func (d *DB) ExecContext(ctx context.Context, query string, args ...interface{}) (db.Result, error) {
+	re, err := d.Pool.Exec(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +71,11 @@ func (d *DB) Exec(query string, args ...interface{}) (db.Result, error) {
 }
 
 func (d *DB) Query(query string, args ...interface{}) (db.Rows, error) {
-	rows, err := d.Pool.Query(context.Background(), query, args...)
+	return d.QueryContext(context.Background(), query, args...)
+}
+
+func (d *DB) QueryContext(ctx context.Context, query string, args ...interface{}) (db.Rows, error) {
+	rows, err := d.Pool.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -68,12 +83,21 @@ func (d *DB) Query(query string, args ...interface{}) (db.Rows, error) {
 }
 
 func (d *DB) QueryRow(query string, args ...interface{}) db.Row {
-	return d.Pool.QueryRow(context.Background(), query, args...)
+	return d.QueryRowContext(context.Background(), query, args...)
 }
 
-func (d *DB) BeginTx(ctx context.Context, isolationLevel string) (db.Tx, error) {
+func (d *DB) QueryRowContext(ctx context.Context, query string, args ...interface{}) db.Row {
+	return d.Pool.QueryRow(ctx, query, args...)
+}
+
+func (d *DB) BeginTx(ctx context.Context, isolationLevel string, readOnly bool) (db.Tx, error) {
+	mode := pgx.ReadWrite
+	if readOnly {
+		mode = pgx.ReadOnly
+	}
 	tx, err := d.Pool.BeginTx(ctx, pgx.TxOptions{
-		IsoLevel: pgx.TxIsoLevel(isolationLevel),
+		IsoLevel:   pgx.TxIsoLevel(isolationLevel),
+		AccessMode: mode,
 	})
 	if err != nil {
 		return nil, err
