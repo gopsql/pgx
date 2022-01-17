@@ -56,6 +56,10 @@ func (d *DB) Close() error {
 	return nil
 }
 
+func (d *DB) DriverName() string {
+	return "postgres"
+}
+
 func (d *DB) Exec(query string, args ...interface{}) (db.Result, error) {
 	return d.ExecContext(context.Background(), query, args...)
 }
