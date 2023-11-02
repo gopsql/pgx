@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/gopsql/db"
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type (
@@ -44,7 +44,7 @@ func MustOpen(conn string) db.DB {
 
 // Open creates and establishes one connection to database.
 func Open(conn string) (db.DB, error) {
-	pool, err := pgxpool.Connect(context.Background(), conn)
+	pool, err := pgxpool.New(context.Background(), conn)
 	if err != nil {
 		return nil, err
 	}
